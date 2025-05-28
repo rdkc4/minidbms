@@ -3,7 +3,10 @@ CXX = clang++
 CXXFLAGS = -std=c++23 -Wall -Wextra -Werror -g
 
 # Source files
-SRCS = main.cpp
+SRCS = main.cpp \
+	token/token.cpp \
+	lexer/defs/lexdefs.cpp \
+	lexer/lexer.cpp
 
 # Object files (derived from the source files)
 OBJS = $(SRCS:.cpp=.o)

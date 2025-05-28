@@ -1,5 +1,7 @@
-#include "BTree/BTree.hpp"
 #include <format>
+
+#include "BTree/BTree.hpp"
+#include "lexer/lexer.hpp"
 
 int main(){
     const int t = 4;
@@ -39,6 +41,9 @@ int main(){
             std::cout << std::format("Key {} found! Value: {}\n", k, ptr->values[idx]);
         }
     }
+
+    Lexer lex("SELECT * FROM somewhere WHERE x > 5;");
+    lex.tokenize();
 
     return 0;
 }
