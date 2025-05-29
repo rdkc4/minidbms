@@ -11,4 +11,6 @@ extern const std::unordered_map<std::string, TokenType> operators;
 
 extern const std::unordered_map<char, TokenType> delimiters;
 
+extern const std::unordered_map<std::string, TokenType> types;
+
 #endif

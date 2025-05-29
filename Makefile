@@ -6,7 +6,10 @@ CXXFLAGS = -std=c++23 -Wall -Wextra -Werror -g
 SRCS = main.cpp \
 	token/token.cpp \
 	lexer/defs/lexdefs.cpp \
-	lexer/lexer.cpp
+	lexer/lexer.cpp \
+	ASTree/defs/astdefs.cpp \
+	ASTree/ASTree.cpp \
+	parser/parser.cpp
 
 # Object files (derived from the source files)
 OBJS = $(SRCS:.cpp=.o)

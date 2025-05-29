@@ -39,3 +39,8 @@ const std::unordered_map<char, TokenType> delimiters {
     {')', TokenType::RPAREN},
     {';', TokenType::SEMICOLON}
 };
+
+const std::unordered_map<std::string, TokenType> types {
+    {"VARCHAR", TokenType::VARCHAR},
+    {"NUMBER", TokenType::NUMBER}
+};

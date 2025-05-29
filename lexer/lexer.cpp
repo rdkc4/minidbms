@@ -5,7 +5,7 @@
 #include <stdexcept>
 #include <string_view>
 
-Lexer::Lexer(std::string_view query) : query{ query }, position {0} {}
+Lexer::Lexer(std::string_view query) : query{ query }, position{ 0 } {}
 
 void Lexer::tokenize() {
     const size_t query_size{ query.size() };
@@ -49,6 +49,10 @@ void Lexer::tokenize() {
     print_tokens();
 }
 
+const Token& Lexer::token_at(size_t n) const noexcept {
+    return n < tokens.size() ? tokens[n] : tokens.back();
+}
+
 void Lexer::updatePosition() noexcept {
     ++position;
 }
@@ -65,6 +69,9 @@ void Lexer::get_id(){
     std::string id{&query[start], position-start};
     if(is_keyword(id)){
         tokens.push_back(Token{id, GeneralTokenType::KEYWORD, keywords.at(id)});
+    }
+    else if(is_type(id)){
+        tokens.push_back(Token{id, GeneralTokenType::TYPE, types.at(id)});
     }
     else{
         tokens.push_back(Token{id, GeneralTokenType::OTHER, TokenType::ID});
@@ -99,6 +106,10 @@ void Lexer::get_string(){
 
 bool Lexer::is_keyword(const std::string& id) const noexcept {
     return keywords.find(id) != keywords.end();
+}
+
+bool Lexer::is_type(const std::string& type) const noexcept {
+    return types.find(type) != types.end();
 }
 
 bool Lexer::is_operator(const std::string& op) const noexcept {

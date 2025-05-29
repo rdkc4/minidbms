@@ -15,7 +15,6 @@ private:
     std::shared_ptr<btn> root;
 
     void split(std::shared_ptr<btn> x, int i, std::shared_ptr<btn> y) {
-        std::cout << "c\n";
         std::shared_ptr<btn> z = std::make_shared<btn>(btn(y->leaf));
         z->n = T - 1;
 
@@ -42,11 +41,9 @@ private:
         x->keys[i] = y->keys[T - 1];
         x->values[i] = y->values[T - 1];
         ++x->n;
-        std::cout << "~c\n";
     }
 
     void insert_nonfull(std::shared_ptr<btn> x, K key, C obj){
-        std::cout << "a\n";
         int i = x->n - 1;
         if(x->leaf) {
             while(i >= 0 && key < x->keys[i]) {
@@ -69,7 +66,6 @@ private:
             }
             insert_nonfull(x->children[i], key, obj);
         }
-        std::cout << "~a\n";
     }
 
     void traverse(std::shared_ptr<btn> x, int level) {
@@ -101,7 +97,6 @@ private:
 public:
     BTree() : root{std::make_shared<btn>(btn())} {}
     void insert(K key, C obj) {
-        std::cout << "b\n";
         if(root->n == 2 * T - 1) {
             std::shared_ptr<btn> s = std::make_shared<btn>(btn(false));
             s->children[0] = root;
@@ -112,7 +107,6 @@ public:
         else {
             insert_nonfull(root, key, obj);
         }
-        std::cout << "~b\n";
     }
 
     void traverse(){

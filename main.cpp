@@ -2,6 +2,7 @@
 
 #include "BTree/BTree.hpp"
 #include "lexer/lexer.hpp"
+#include "parser/parser.hpp"
 
 int main(){
     const int t = 4;
@@ -42,8 +43,13 @@ int main(){
         }
     }
 
-    Lexer lex("SELECT * FROM somewhere WHERE x > 5;");
+    Lexer lex("SELECT (a,b,c) FROM somewhere WHERE x > 5; CREATE TABLE something (NUMBER A, VARCHAR B); INSERT INTO something (value1, value2) VALUES (123, 123); UPDATE tablename SET abc=123, efg='agg' WHERE a>2; DELETE FROM tab WHERE x>0; DROP TABLE t;");
     lex.tokenize();
+
+    Parser parser(lex);
+    auto ast = parser.parse_script();
+    std::cout << "\nASTREE:\n";
+    ast->traverse(0);
 
     return 0;
 }

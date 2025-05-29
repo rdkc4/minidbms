@@ -3,6 +3,8 @@
 #include <iostream>
 #include <format>
 
+Token::Token() : value{ "" }, general_type{ GeneralTokenType::OTHER },  token_type{ TokenType::NONE } {}
+
 Token::Token(std::string_view value, GeneralTokenType general_type, TokenType token_type) : 
     value{ value }, general_type{ general_type }, token_type{ token_type } {}
 
@@ -46,11 +48,15 @@ const std::unordered_map<TokenType, std::string> token_type_str {
     {TokenType::SEMICOLON, "SEMICOLON"},
     {TokenType::APOSTROPHE, "APOSTROPHE"},
     {TokenType::ASTERISK, "ASTERISK"},
+    {TokenType::NUMBER, "NUMBER"},
+    {TokenType::VARCHAR, "VARCHAR"},
+    {TokenType::NONE, "NONE"},
     {TokenType::END, "END"}
 };
 
 const std::unordered_map<GeneralTokenType, std::string> general_token_str {
     {GeneralTokenType::KEYWORD, "KEYWORD"},
+    {GeneralTokenType::TYPE, "TYPE"},
     {GeneralTokenType::OPERATOR, "OPERATOR"},
     {GeneralTokenType::DELIMITER, "DELIMITER"},
     {GeneralTokenType::LITERAL, "LITERAL"},
