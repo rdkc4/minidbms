@@ -9,7 +9,10 @@ SRCS = main.cpp \
 	lexer/lexer.cpp \
 	ASTree/defs/astdefs.cpp \
 	ASTree/ASTree.cpp \
-	parser/parser.cpp
+	parser/parser.cpp \
+	SchemaCatalog/defs/schemadefs.cpp \
+	SchemaCatalog/TableSchema/TableSchema.cpp \
+	SchemaCatalog/SchemaCatalog/SchemaCatalog.cpp
 
 # Object files (derived from the source files)
 OBJS = $(SRCS:.cpp=.o)
