@@ -14,7 +14,7 @@ public:
     const Token& token_at(size_t) const noexcept;
 
 private:
-    std::string query;
+    std::string script;
     size_t position;
     std::vector<Token> tokens;
 

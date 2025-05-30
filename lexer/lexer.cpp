@@ -5,12 +5,12 @@
 #include <stdexcept>
 #include <string_view>
 
-Lexer::Lexer(std::string_view query) : query{ query }, position{ 0 } {}
+Lexer::Lexer(std::string_view script) : script{ script }, position{ 0 } {}
 
 void Lexer::tokenize() {
-    const size_t query_size{ query.size() };
-    while(position < query_size){
-        char curr = query[position];
+    const size_t script_size{ script.size() };
+    while(position < script_size){
+        char curr = script[position];
         
         if(std::isspace(curr)){
             updatePosition();
@@ -24,13 +24,13 @@ void Lexer::tokenize() {
         else if(is_delimiter(curr)){
             get_delimiter(curr);
         }
-        else if(is_operator(std::string{&query[position], 2})){
-            std::string op{ &query[position], 2 };
+        else if(position + 1 < script_size && is_operator(std::string{&script[position], 2})){
+            std::string op{ &script[position], 2 };
             tokens.push_back(Token{op, GeneralTokenType::OPERATOR, operators.at(op)});
             updatePosition(2);
         }
-        else if(is_operator(std::string{query[position]})){
-            std::string op{ &query[position], 1 };
+        else if(is_operator(std::string{script[position]})){
+            std::string op{ &script[position], 1 };
             tokens.push_back(Token{op, GeneralTokenType::OPERATOR, operators.at(op)});
             updatePosition();
         }
@@ -38,7 +38,7 @@ void Lexer::tokenize() {
             get_string();
         }
         else if(curr == '*'){
-            tokens.push_back(Token{std::string_view{&query[position], 1}, GeneralTokenType::OTHER, TokenType::ASTERISK});
+            tokens.push_back(Token{std::string_view{&script[position], 1}, GeneralTokenType::OTHER, TokenType::ASTERISK});
             updatePosition();
         }
         else{
@@ -62,11 +62,12 @@ void Lexer::updatePosition(size_t n) noexcept {
 }
 
 void Lexer::get_id(){
-    size_t start{ position };
-    while(std::isalnum(query[position])){
+    const size_t start{ position };
+    const size_t script_size{ script.size() };
+    while(position < script_size && std::isalnum(script[position])){
         updatePosition();
     }
-    std::string id{&query[start], position-start};
+    std::string id{&script[start], position-start};
     if(is_keyword(id)){
         tokens.push_back(Token{id, GeneralTokenType::KEYWORD, keywords.at(id)});
     }
@@ -79,11 +80,12 @@ void Lexer::get_id(){
 }
 
 void Lexer::get_number(){
-    size_t start{ position };
-    while(std::isdigit(query[position])){
+    const size_t start{ position };
+    const size_t script_size{ script.size() };
+    while(position < script_size && std::isdigit(script[position])){
         updatePosition();
     }
-    tokens.push_back(Token{std::string_view{&query[start], position - start}, GeneralTokenType::LITERAL, TokenType::NUMBER_LITERAL});
+    tokens.push_back(Token{std::string_view{&script[start], position - start}, GeneralTokenType::LITERAL, TokenType::NUMBER_LITERAL});
 }
 
 void Lexer::get_delimiter(char curr){
@@ -93,14 +95,15 @@ void Lexer::get_delimiter(char curr){
 
 void Lexer::get_string(){
     updatePosition();
-    size_t start{ position };
-    while(query[position] != '\0' && query[position] != '\''){
+    const size_t start{ position };
+    const size_t script_size{ script.size() };
+    while(position < script_size && script[position] != '\''){
         updatePosition();
     }
-    if(query[position] == '\0'){
+    if(position >= script_size){
         throw std::runtime_error(std::format("Invalid string literal"));
     }
-    tokens.push_back(Token{std::string_view{&query[start], position - start}, GeneralTokenType::LITERAL, TokenType::STRING_LITERAL});
+    tokens.push_back(Token{std::string_view{&script[start], position - start}, GeneralTokenType::LITERAL, TokenType::STRING_LITERAL});
     updatePosition();
 }
 
