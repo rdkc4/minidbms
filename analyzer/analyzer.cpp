@@ -126,7 +126,7 @@ void Analyzer::analyze_conditions(const TableSchema& table_schema, const ASTree*
                 literal_to_type.at(condition->child_at(1)->get_token().token_type);
 
     if(left != right){
-        throw std::runtime_error(std::format("Type mismatch: left - {}, right - {}\n", data_type_str.at(left), data_type_str.at(right)));
+        throw std::runtime_error(std::format("Type mismatch: left op - '{}', right op - '{}'\n", data_type_str.at(left), data_type_str.at(right)));
     }
 }
 

@@ -28,7 +28,7 @@ const Token& Parser::peek() const noexcept {
 
 void Parser::consume_token(TokenType token_type){
     if(token.token_type != token_type){
-        throw std::runtime_error(std::format("Expected {}, got {}\n", token_type_str.at(token_type), token_type_str.at(token.token_type)));
+        throw std::runtime_error(std::format("Expected '{}', got '{}'\n", token_type_str.at(token_type), token_type_str.at(token.token_type)));
     }
     token = next_token();
 }
@@ -48,7 +48,7 @@ std::unique_ptr<ASTree> Parser::parse_query(){
         case TokenType::DROP:
             return parse_drop();
         default:
-            throw std::runtime_error(std::format("Invalid query command: {}\n", token_type_str.at(token.token_type)));
+            throw std::runtime_error(std::format("Invalid query command: '{}'\n", token_type_str.at(token.token_type)));
     }
 }
 

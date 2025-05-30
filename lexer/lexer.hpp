@@ -8,7 +8,7 @@
 
 class Lexer {
 public:
-    Lexer(std::string_view);
+    explicit Lexer(std::string_view);
     void tokenize();
 
     const Token& token_at(size_t) const noexcept;

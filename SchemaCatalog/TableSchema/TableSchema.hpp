@@ -9,7 +9,7 @@
 
 class TableSchema{
 public:
-    TableSchema(std::string_view);
+    explicit TableSchema(std::string_view);
 
     void add_column(const Column&);
 

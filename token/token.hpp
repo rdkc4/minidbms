@@ -10,7 +10,7 @@ struct Token {
     TokenType token_type;
 
     Token();
-    Token(std::string_view);
+    explicit Token(std::string_view);
     Token(std::string_view, GeneralTokenType, TokenType);
     void print_token() const noexcept;
 };

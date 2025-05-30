@@ -42,7 +42,7 @@ void Lexer::tokenize() {
             updatePosition();
         }
         else{
-            throw std::runtime_error(std::format("Invalid token: {}\n", curr));
+            throw std::runtime_error(std::format("Invalid token: '{}'\n", curr));
         }
     }
     tokens.push_back(Token{"", GeneralTokenType::OTHER, TokenType::END});

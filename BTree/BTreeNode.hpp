@@ -13,7 +13,7 @@ public:
     int n;
     bool leaf;
 
-    BTreeNode(bool is_leaf = true) : n{}, leaf{ is_leaf } {}
+    explicit BTreeNode(bool is_leaf = true) : n{}, leaf{ is_leaf } {}
 };
 
 #endif
