@@ -12,3 +12,7 @@ std::optional<std::reference_wrapper<const TableSchema>> SchemaCatalog::get_tabl
     }
     return std::nullopt;
 }
+
+bool SchemaCatalog::table_exists(const std::string& table_name) const noexcept {
+    return tables.find(table_name) != tables.end() ? true : false;
+}

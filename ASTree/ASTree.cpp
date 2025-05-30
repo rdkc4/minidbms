@@ -18,6 +18,10 @@ ASTNodeType ASTree::get_type() const noexcept {
     return node_type;
 }
 
+size_t ASTree::children_size() const noexcept {
+    return children.size();
+}
+
 const ASTree* ASTree::child_at(size_t n) const noexcept {
     return n < children.size() ? children[n].get() : nullptr;
 }
@@ -27,7 +31,7 @@ const std::vector<std::unique_ptr<ASTree>>& ASTree::get_children() const noexcep
 }
 
 std::string ASTree::ast_str() const {
-    return std::format("Token: {}| AST : {}", ast_node_str.at(node_type),  token.value);
+    return std::format("AST: {}| Token value: {}", ast_node_str.at(node_type),  token.value);
 }
 
 void ASTree::traverse(size_t offset) const {

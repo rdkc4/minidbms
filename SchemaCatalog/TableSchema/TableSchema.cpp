@@ -22,3 +22,12 @@ std::optional<std::reference_wrapper<const Column>> TableSchema::get_column(cons
     }
     return std::nullopt;
 }
+
+bool TableSchema::column_exists(const std::string& col_name) const noexcept {
+    for(const auto& col : columns){
+        if(col.name == col_name){
+            return true;
+        }
+    }
+    return false;
+}

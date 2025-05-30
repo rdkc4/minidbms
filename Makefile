@@ -4,6 +4,7 @@ CXXFLAGS = -std=c++23 -Wall -Wextra -Werror -g
 
 # Source files
 SRCS = main.cpp \
+	token/defs/tokendefs.cpp \
 	token/token.cpp \
 	lexer/defs/lexdefs.cpp \
 	lexer/lexer.cpp \
@@ -12,7 +13,8 @@ SRCS = main.cpp \
 	parser/parser.cpp \
 	SchemaCatalog/defs/schemadefs.cpp \
 	SchemaCatalog/TableSchema/TableSchema.cpp \
-	SchemaCatalog/SchemaCatalog/SchemaCatalog.cpp
+	SchemaCatalog/SchemaCatalog/SchemaCatalog.cpp \
+	analyzer/analyzer.cpp
 
 # Object files (derived from the source files)
 OBJS = $(SRCS:.cpp=.o)

@@ -194,6 +194,7 @@ std::unique_ptr<ASTree> Parser::parse_condition(){
     consume_token(token.general_type == GeneralTokenType::OPERATOR ? token.token_type : TokenType::NONE);
     condition->add_child(std::move(lchild));
     condition->add_child(token.general_type == GeneralTokenType::LITERAL ? parse_value() : parse_id());
+    conditions->add_child(std::move(condition));
 
     return conditions;
 }
@@ -213,11 +214,12 @@ std::unique_ptr<ASTree> Parser::parse_table_columns(){
 
     std::unique_ptr<ASTree> defs = std::make_unique<ASTree>(Token{}, ASTNodeType::COLUMNS);
     while(token.general_type == GeneralTokenType::TYPE){
-        defs->add_child(std::make_unique<ASTree>(token, ASTNodeType::TYPE));
+        std::unique_ptr<ASTree> type = std::make_unique<ASTree>(token, ASTNodeType::TYPE);
         consume_token(token.token_type);
         
         defs->add_child(std::make_unique<ASTree>(token, ASTNodeType::COLUMN));
         consume_token(TokenType::ID);
+        defs->get_children().back()->add_child(std::move(type));
         
         if(token.token_type == TokenType::COMMA){
             consume_token(TokenType::COMMA);
@@ -256,7 +258,7 @@ std::unique_ptr<ASTree> Parser::parse_assignments(){
         id->add_child(std::make_unique<ASTree>(token, ASTNodeType::COLUMN));
         consume_token(TokenType::ID);
         consume_token(TokenType::EQUAL);
-        id->add_child(parse_value());
+        id->get_children().back()->add_child(parse_value());
 
         if(token.token_type == TokenType::COMMA){
             consume_token(TokenType::COMMA);

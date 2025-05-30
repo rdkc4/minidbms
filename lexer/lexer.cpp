@@ -46,7 +46,7 @@ void Lexer::tokenize() {
         }
     }
     tokens.push_back(Token{"", GeneralTokenType::OTHER, TokenType::END});
-    print_tokens();
+    //print_tokens();
 }
 
 const Token& Lexer::token_at(size_t n) const noexcept {

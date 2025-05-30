@@ -15,6 +15,8 @@ public:
 
     const Token& get_token() const noexcept;
     ASTNodeType get_type() const noexcept;
+    size_t children_size() const noexcept;
+    
     const ASTree* child_at(size_t) const noexcept;
     const std::vector<std::unique_ptr<ASTree>>& get_children() const noexcept;
 

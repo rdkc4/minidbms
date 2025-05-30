@@ -2,17 +2,7 @@
 #define TOKEN_HPP
 
 #include <string>
-#include <unordered_map>
-
-enum class TokenType { SELECT, FROM, WHERE, INSERT, INTO, VALUES, AND, OR, ID, STRING_LITERAL, NUMBER_LITERAL, 
-    EQUAL, GREATER, GREATER_EQUAL, LESS, LESS_EQUAL, NOT_EQUAL, COMMA, LPAREN, RPAREN, SEMICOLON, APOSTROPHE, 
-    ORDER, BY, LIMIT, UPDATE, SET, DELETE, CREATE, DROP, TABLE, _NULL, ASTERISK, END, VARCHAR, NUMBER, NONE };
-
-extern const std::unordered_map<TokenType, std::string> token_type_str;
-
-enum class GeneralTokenType { KEYWORD, TYPE, OPERATOR, DELIMITER, LITERAL, OTHER };
-
-extern const std::unordered_map<GeneralTokenType, std::string> general_token_str;
+#include "defs/tokendefs.hpp"
 
 struct Token {
     std::string value;

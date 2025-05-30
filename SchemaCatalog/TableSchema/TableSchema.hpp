@@ -15,6 +15,7 @@ public:
 
     const std::string& get_table_name() const noexcept;
     std::optional<std::reference_wrapper<const Column>> get_column(const std::string&) const noexcept;
+    bool column_exists(const std::string&) const noexcept;
 
 private:
     std::string table_name;
