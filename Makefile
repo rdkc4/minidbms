@@ -14,7 +14,9 @@ SRCS = main.cpp \
 	SchemaCatalog/defs/schemadefs.cpp \
 	SchemaCatalog/TableSchema/TableSchema.cpp \
 	SchemaCatalog/SchemaCatalog/SchemaCatalog.cpp \
-	analyzer/analyzer.cpp
+	analyzer/analyzer.cpp \
+	storage/BufferManager/BufferManager.cpp \
+	QueryExecutor/QueryExecutor.cpp
 
 # Object files (derived from the source files)
 OBJS = $(SRCS:.cpp=.o)

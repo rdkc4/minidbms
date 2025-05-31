@@ -14,8 +14,13 @@ public:
     void add_column(const Column&);
 
     const std::string& get_table_name() const noexcept;
+    size_t columns_size() const noexcept;
+    const std::vector<Column>& get_columns() const noexcept;
+
     std::optional<std::reference_wrapper<const Column>> get_column(const std::string&) const noexcept;
     bool column_exists(const std::string&) const noexcept;
+
+    void print_column_names() const;
 
 private:
     std::string table_name;

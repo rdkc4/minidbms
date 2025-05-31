@@ -1,12 +1,13 @@
 #ifndef SCHEMADEFS_HPP
 #define SCHEMADEFS_HPP
 
+#include <cstdint>
 #include <string>
 #include <unordered_map>
 
 #include "../../token/defs/tokendefs.hpp"
 
-enum class DataType { NUMBER, VARCHAR };
+enum class DataType : uint8_t { NUMBER, VARCHAR };
 
 extern const std::unordered_map<DataType, std::string> data_type_str;
 

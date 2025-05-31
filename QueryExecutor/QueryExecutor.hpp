@@ -3,15 +3,17 @@
 
 #include "../ASTree/ASTree.hpp"
 #include "../SchemaCatalog/SchemaCatalog/SchemaCatalog.hpp"
+#include "../storage/BufferManager/BufferManager.hpp"
 
 class QueryExecutor {
 public:
-    QueryExecutor(SchemaCatalog&);
+    QueryExecutor(SchemaCatalog&, BufferManager&);
 
     void execute_script(const ASTree*);
 
 private:
     SchemaCatalog& schema_catalog;
+    BufferManager buffer_manager;
 
     void execute_query(const ASTree*);
     void execute_select(const ASTree*);
