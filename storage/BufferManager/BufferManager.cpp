@@ -31,11 +31,12 @@ bool BufferManager::load_schema(const std::string& path, SchemaCatalog& schema_c
         for(uint32_t i = 0; i < column_number; ++i){
             DataType type;
             std::memcpy(&type, buffer.data() + offset, sizeof(DataType));
-            offset += sizeof(DataType);
+            uint8_t is_key;
+            std::memcpy(&is_key, buffer.data() + offset + sizeof(DataType), sizeof(uint8_t));
 
-            std::string column_name{buffer.data() + offset};
-            columns.push_back(Column{ column_name, type});
-            offset += 20;
+            std::string column_name{buffer.data() + offset + sizeof(DataType) + sizeof(uint8_t)};
+            columns.push_back(Column{ column_name, type, static_cast<bool>(is_key) });
+            offset += 20 + sizeof(DataType) + sizeof(uint8_t);
         }
         TableSchema ts{table_name};
         for(const auto& col : columns){
@@ -59,8 +60,10 @@ void BufferManager::save_schema(const std::string& path, const TableSchema& ts) 
     
     for(const auto& col : ts.get_columns()) {
         std::memcpy(&page.data[offset], &col.type, sizeof(uint8_t));
-        std::memcpy(&page.data[offset + sizeof(col.type)], col.name.data(), col.name.size());
-        offset += 20 + sizeof(col.type);
+        uint8_t is_key = static_cast<uint8_t>(col.is_key);
+        std::memcpy(&page.data[offset + sizeof(uint8_t)], &is_key, sizeof(uint8_t));
+        std::memcpy(&page.data[offset + sizeof(col.type) * 2], col.name.data(), col.name.size());
+        offset += 20 + sizeof(col.type) + sizeof(is_key);
     }
     std::ofstream os{path, std::ios::binary | std::ios::app };
     if(!os.is_open()){

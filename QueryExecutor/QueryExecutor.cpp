@@ -41,7 +41,7 @@ void QueryExecutor::execute_create(const ASTree* create) {
     TableSchema table_schema{create->child_at(0)->get_token().value};
     for(const auto& column : create->child_at(1)->get_children()){
         DataType type = column->child_at(0)->get_token().token_type == TokenType::VARCHAR ? DataType::VARCHAR : DataType::NUMBER;
-        Column col{column->get_token().value, type};
+        Column col{column->get_token().value, type, column->get_children().back()->get_type() == ASTNodeType::KEY};
         table_schema.add_column(col);
     }
     buffer_manager.save_schema("metadata/schema/schema.db", table_schema);

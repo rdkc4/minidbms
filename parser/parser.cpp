@@ -213,14 +213,22 @@ std::unique_ptr<ASTree> Parser::parse_table_columns(){
     consume_token(TokenType::LPAREN);
 
     std::unique_ptr<ASTree> defs = std::make_unique<ASTree>(Token{}, ASTNodeType::COLUMNS);
-    while(token.general_type == GeneralTokenType::TYPE){
+    while(token.general_type == GeneralTokenType::TYPE || token.token_type == TokenType::PRIMARY){
+        bool is_key = false;
+        if(token.token_type == TokenType::PRIMARY){
+            consume_token(TokenType::PRIMARY);
+            consume_token(TokenType::KEY);
+            is_key = true;
+        }
         std::unique_ptr<ASTree> type = std::make_unique<ASTree>(token, ASTNodeType::TYPE);
         consume_token(token.token_type);
         
         defs->add_child(std::make_unique<ASTree>(token, ASTNodeType::COLUMN));
         consume_token(TokenType::ID);
         defs->get_children().back()->add_child(std::move(type));
-        
+        if(is_key){
+            defs->get_children().back()->add_child(std::make_unique<ASTree>(Token{"KEY", GeneralTokenType::OTHER, TokenType::KEY}, ASTNodeType::KEY));
+        }
         if(token.token_type == TokenType::COMMA){
             consume_token(TokenType::COMMA);
         }

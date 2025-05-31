@@ -20,6 +20,8 @@ const std::unordered_map<std::string, TokenType> keywords {
     {"NULL", TokenType::_NULL},
     {"AND", TokenType::AND},
     {"OR", TokenType::OR},
+    {"PRIMARY", TokenType::PRIMARY},
+    {"KEY", TokenType::KEY},
     {"NULL", TokenType::_NULL}
 };
 

@@ -13,5 +13,6 @@ const std::unordered_map<ASTNodeType, std::string> ast_node_str {
     {ASTNodeType::ID, "ID"},
     {ASTNodeType::ASSIGNMENTS, "ASSIGNMENTS"},
     {ASTNodeType::VALUES, "VALUES"},
-    {ASTNodeType::VALUE, "VALUE"}
+    {ASTNodeType::VALUE, "VALUE"},
+    {ASTNodeType::KEY, "KEY"}
 };

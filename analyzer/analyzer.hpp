@@ -30,8 +30,8 @@ private:
     void analyze_columns(const TableSchema&, const ASTree*) const;
     void analyze_column(const TableSchema&, const ASTree*) const;
     void duplicate_columns(const ASTree*) const;
-
-    void analyze_insert_types(const TableSchema& table_schema, const ASTree*, const ASTree*) const;
+    void analyze_insert_types(const TableSchema&, const ASTree*, const ASTree*) const;
+    void analyze_keys(const ASTree*) const;
 
 };
 

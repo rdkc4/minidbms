@@ -3,7 +3,7 @@
 
 #include <string>
 #include <unordered_map>
-#include "../../token/token.hpp"
+#include "../../token/defs/tokendefs.hpp"
 
 extern const std::unordered_map<std::string, TokenType> keywords;
 

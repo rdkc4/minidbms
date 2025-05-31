@@ -60,6 +60,7 @@ void Analyzer::analyze_create(const ASTree* create) const {
     const std::string& table_name = create->child_at(0)->get_token().value;
     analyze_table(table_name, false);
     duplicate_columns(create->child_at(1));
+    analyze_keys(create->child_at(1));
 }
 
 void Analyzer::analyze_insert(const ASTree* insert) const {
@@ -180,5 +181,20 @@ void Analyzer::duplicate_columns(const ASTree* columns) const {
             throw std::runtime_error(std::format("Duplicate column '{}'\n", column_name));
         }
         column_names.insert(column_name);
+    }
+}
+
+void Analyzer::analyze_keys(const ASTree* columns) const {
+    unsigned keys_number = 0;
+    for(const auto& column : columns->get_children()) {
+        if(column->get_children().back()->get_type() == ASTNodeType::KEY) {
+            ++keys_number;
+        }
+    }
+    if(keys_number == 0) {
+        throw std::runtime_error(std::format("Table has no keys\n"));
+    }
+    else if(keys_number > 1){
+        throw std::runtime_error("Table has multiple keys\n");
     }
 }

@@ -13,4 +13,4 @@ const std::unordered_map<TokenType, DataType> literal_to_type {
     {TokenType::NUMBER, DataType::NUMBER}
 };
 
-Column::Column(std::string_view name, DataType type) : name{ name }, type { type } {}
+Column::Column(std::string_view name, DataType type, bool is_key) : name{ name }, type { type }, is_key{ is_key } {}

@@ -43,6 +43,6 @@ bool TableSchema::column_exists(const std::string& col_name) const noexcept {
 
 void TableSchema::print_column_names() const {
     for(const auto& col : columns){
-        std::cout << std::format("Column name: {}, type: {}\n", col.name, data_type_str.at(col.type));
+        std::cout << std::format("Column name: {}, type: {}, key: {}\n", col.name, data_type_str.at(col.type), col.is_key ? "True" : "False");
     }
 }

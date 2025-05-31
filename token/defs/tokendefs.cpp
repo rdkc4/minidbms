@@ -38,7 +38,9 @@ const std::unordered_map<TokenType, std::string> token_type_str {
     {TokenType::NUMBER, "NUMBER"},
     {TokenType::VARCHAR, "VARCHAR"},
     {TokenType::NONE, "NONE"},
-    {TokenType::END, "END"}
+    {TokenType::END, "END"},
+    {TokenType::PRIMARY, "PRIMARY"},
+    {TokenType::KEY, "KEY"}
 };
 
 const std::unordered_map<GeneralTokenType, std::string> general_token_str {
