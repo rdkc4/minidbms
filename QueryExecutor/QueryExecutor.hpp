@@ -15,6 +15,9 @@ private:
     SchemaCatalog& schema_catalog;
     BufferManager buffer_manager;
 
+    const std::string SCHEMA_PATH = "metadata/schema/schema.db";
+    const std::string TABLES_PATH = "metadata/tables/";
+
     void execute_query(const ASTree*);
     void execute_select(const ASTree*);
     void execute_create(const ASTree*);

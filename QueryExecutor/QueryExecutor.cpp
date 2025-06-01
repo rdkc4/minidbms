@@ -44,7 +44,7 @@ void QueryExecutor::execute_create(const ASTree* create) {
         Column col{column->get_token().value, type, column->get_children().back()->get_type() == ASTNodeType::KEY};
         table_schema.add_column(col);
     }
-    buffer_manager.save_schema("metadata/schema/schema.db", table_schema);
+    buffer_manager.save_schema(SCHEMA_PATH, TABLES_PATH, table_schema);
 }
 
 void QueryExecutor::execute_insert(const ASTree* insert) {
@@ -60,5 +60,5 @@ void QueryExecutor::execute_delete(const ASTree* _delete) {
 }
 
 void QueryExecutor::execute_drop(const ASTree* drop) {
-    buffer_manager.delete_schema("metadata/schema/schema.db", drop->child_at(0)->get_token().value, schema_catalog);
+    buffer_manager.delete_schema(SCHEMA_PATH, TABLES_PATH, drop->child_at(0)->get_token().value, schema_catalog);
 }

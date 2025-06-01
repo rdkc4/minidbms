@@ -38,45 +38,50 @@ bool BufferManager::load_schema(const std::string& path, SchemaCatalog& schema_c
             columns.push_back(Column{ column_name, type, static_cast<bool>(is_key) });
             offset += 20 + sizeof(DataType) + sizeof(uint8_t);
         }
-        TableSchema ts{table_name};
+        TableSchema table_schema{table_name};
         for(const auto& col : columns){
-            ts.add_column(col);
+            table_schema.add_column(col);
         }
-        schema_catalog.add_table(ts);
+        schema_catalog.add_table(table_schema);
     }
     return true;
 }
 
-void BufferManager::save_schema(const std::string& path, const TableSchema& ts) {
-    SchemaPage page;
-    page.table_name_len = static_cast<uint32_t>(ts.get_table_name().size());
-    page.column_number = static_cast<uint32_t>(ts.columns_size());
+void BufferManager::save_schema(const std::string& schema_path, const std::string& table_path, const TableSchema& table_schema) {
+    SchemaPage schema_page;
+    schema_page.table_name_len = static_cast<uint32_t>(table_schema.get_table_name().size());
+    schema_page.column_number = static_cast<uint32_t>(table_schema.columns_size());
     
     size_t offset = 0;
-    std::memset(&page.data[0], 0, sizeof(page.data));
+    std::memset(&schema_page.data[0], 0, sizeof(schema_page.data));
     
-    std::memcpy(&page.data[offset], &ts.get_table_name()[0], ts.get_table_name().size());
-    offset += ts.get_table_name().size();
+    std::memcpy(&schema_page.data[offset], &table_schema.get_table_name()[0], table_schema.get_table_name().size());
+    offset += table_schema.get_table_name().size();
     
-    for(const auto& col : ts.get_columns()) {
-        std::memcpy(&page.data[offset], &col.type, sizeof(uint8_t));
+    for(const auto& col : table_schema.get_columns()) {
+        std::memcpy(&schema_page.data[offset], &col.type, sizeof(uint8_t));
         uint8_t is_key = static_cast<uint8_t>(col.is_key);
-        std::memcpy(&page.data[offset + sizeof(uint8_t)], &is_key, sizeof(uint8_t));
-        std::memcpy(&page.data[offset + sizeof(col.type) * 2], col.name.data(), col.name.size());
+        std::memcpy(&schema_page.data[offset + sizeof(uint8_t)], &is_key, sizeof(uint8_t));
+        std::memcpy(&schema_page.data[offset + sizeof(col.type) * 2], col.name.data(), col.name.size());
         offset += 20 + sizeof(col.type) + sizeof(is_key);
     }
-    std::ofstream os{path, std::ios::binary | std::ios::app };
-    if(!os.is_open()){
-        std::cerr << std::format("Unable to open '{}'\n", path);
-        return;
+    {
+        std::ofstream os{schema_path, std::ios::binary | std::ios::app };
+        if(!os.is_open()){
+            std::cerr << std::format("Unable to open '{}'\n", schema_path);
+            return;
+        }
+        os.write(reinterpret_cast<const char*>(&schema_page), sizeof(schema_page));
     }
-    os.write(reinterpret_cast<const char*>(&page), sizeof(page));
+    std::ofstream os{table_path + table_schema.get_table_name() + ".db", std::ios::binary};
+    Page table_page;
+    os.write(reinterpret_cast<const char*>(&table_page), sizeof(table_page));
 }
 
-void BufferManager::delete_schema(const std::string& path, const std::string& table_name, SchemaCatalog& schema_catalog) {
-    std::fstream file{ path, std::ios::in | std::ios::out | std::ios::binary};
+void BufferManager::delete_schema(const std::string& schema_path, const std::string& table_path, const std::string& table_name, SchemaCatalog& schema_catalog) {
+    std::fstream file{ schema_path, std::ios::in | std::ios::out | std::ios::binary};
     if(!file.is_open()){
-        std::cerr << std::format("Unable to open '{}'\n", path);
+        std::cerr << std::format("Unable to open '{}'\n", schema_path);
         return;
     }
     bool found = false;
@@ -110,8 +115,9 @@ void BufferManager::delete_schema(const std::string& path, const std::string& ta
         src_offset += PAGE_SIZE;
         dst_offset += PAGE_SIZE;
     }
-    std::filesystem::resize_file(path, dst_offset);
+    std::filesystem::resize_file(schema_path, dst_offset);
     schema_catalog.drop_table(table_name);
+    std::filesystem::remove(table_path + table_name + ".db");
 }
 
 Block BufferManager::data_to_block(const ASTree*, const TableSchema&) {

@@ -35,6 +35,8 @@ struct Page {
     Block blocks[2 * T - 1]; //3584 -> T = 4
     uint16_t offset[2 * T]; //16 -> T = 4
     char alignment[PAGE_SIZE - sizeof(offset) - sizeof(blocks) - sizeof(n) - sizeof(is_leaf)];
+    Page() : n{ 0 }, is_leaf{ 1 } {}
+    Page(uint8_t n, uint8_t is_leaf = 1) : n{ n }, is_leaf{ is_leaf } {}
 };
 #pragma pack(pop)
 
