@@ -16,6 +16,7 @@ SRCS = main.cpp \
 	SchemaCatalog/SchemaCatalog/SchemaCatalog.cpp \
 	analyzer/analyzer.cpp \
 	storage/BufferManager/BufferManager.cpp \
+	storage/BTree/BTree.cpp \
 	QueryExecutor/QueryExecutor.cpp
 
 # Object files (derived from the source files)

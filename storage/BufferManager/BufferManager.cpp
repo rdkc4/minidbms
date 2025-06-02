@@ -5,8 +5,11 @@
 #include <cstring>
 #include <format>
 #include <fstream>
+#include <ios>
+#include <iosfwd>
 #include <iostream>
 #include <filesystem>
+#include <stdexcept>
 
 bool BufferManager::load_schema(const std::string& path, SchemaCatalog& schema_catalog) {
     std::ifstream file{ path, std::ios::binary };
@@ -74,7 +77,9 @@ void BufferManager::save_schema(const std::string& schema_path, const std::strin
         os.write(reinterpret_cast<const char*>(&schema_page), sizeof(schema_page));
     }
     std::ofstream os{table_path + table_schema.get_table_name() + ".db", std::ios::binary};
-    Page table_page;
+    TablePage table_page;
+    uint32_t initial_root_id = 0;
+    os.write(reinterpret_cast<const char*>(&initial_root_id), sizeof(initial_root_id)); //offset of a root on first 4 bytes
     os.write(reinterpret_cast<const char*>(&table_page), sizeof(table_page));
 }
 
@@ -110,7 +115,7 @@ void BufferManager::delete_schema(const std::string& schema_path, const std::str
         if (file.gcount() == 0) break;
 
         file.seekp(dst_offset);
-        file.write(buffer.data(), file.gcount());
+        file.write(buffer.data(), PAGE_SIZE);
 
         src_offset += PAGE_SIZE;
         dst_offset += PAGE_SIZE;
@@ -120,11 +125,93 @@ void BufferManager::delete_schema(const std::string& schema_path, const std::str
     std::filesystem::remove(table_path + table_name + ".db");
 }
 
+std::unique_ptr<TablePage> BufferManager::table_page_at(const std::string& table_path, uint32_t page_id){
+    std::ifstream file{ table_path, std::ios::binary };
+    if(!file.is_open()) {
+        return nullptr;
+    }
+
+    file.seekg(static_cast<std::streampos>(sizeof(uint32_t) + page_id * PAGE_SIZE));
+    if(!file || file.eof()) return nullptr;
+
+    std::array<char, PAGE_SIZE> buffer;
+    file.read(buffer.data(), PAGE_SIZE);
+    
+    if(file.gcount() != PAGE_SIZE) return nullptr;
+
+    std::unique_ptr<TablePage> table_page = std::make_unique<TablePage>();
+    std::memcpy(table_page.get(), buffer.data(), PAGE_SIZE);
+
+    return table_page;
+}
+
+std::unique_ptr<TablePage> BufferManager::root_table_page(const std::string& table_path){
+    std::ifstream file{ table_path, std::ios::binary };
+    if(!file.is_open()) {
+        return nullptr;
+    }
+    std::array<char, PAGE_SIZE> buffer;
+    file.read(buffer.data(), sizeof(uint32_t));
+    if(file.gcount() != sizeof(uint32_t)) return nullptr;
+
+    uint32_t root_id{};
+    std::memcpy(&root_id, buffer.data(), sizeof(uint32_t));
+    file.seekg(static_cast<std::streampos>(PAGE_SIZE * root_id + sizeof(uint32_t)));
+    file.read(buffer.data(), PAGE_SIZE);
+    if(file.gcount() != PAGE_SIZE) return nullptr;
+
+    TablePage table_page;
+    std::memcpy(&table_page, buffer.data(), PAGE_SIZE);
+
+    return std::make_unique<TablePage>(table_page);
+}
+
+void BufferManager::write_page(const std::string& table_path, const TablePage* table_page){
+    std::fstream file{ table_path, std::ios::binary | std::ios::in | std::ios::out};
+    if(!file.is_open()){
+        return;
+    }
+    file.seekp(static_cast<std::streampos>(table_page->page_id * PAGE_SIZE + sizeof(uint32_t)));
+    file.write(reinterpret_cast<const char*>(table_page), PAGE_SIZE);    
+}
+
+uint32_t BufferManager::new_page_id(const std::string& table_path) {
+    std::ifstream file{ table_path, std::ios::binary | std::ios::ate };
+    if(!file.is_open()){
+        return 0;
+    }
+    
+    std::streampos file_size = file.tellg();
+    if(file_size <= static_cast<std::streampos>(sizeof(uint32_t))){
+        return 0;
+    } 
+    return (static_cast<uint32_t>(file_size) - sizeof(uint32_t)) / PAGE_SIZE;
+}
+
+void BufferManager::update_root_id(const std::string& table_path, uint32_t root_id) {
+    std::fstream file{ table_path, std::ios::binary | std::ios::in | std::ios::out };
+    file.seekp(std::ios::beg);
+    file.write(reinterpret_cast<const char*>(&root_id), sizeof(root_id));
+}
+
+uint32_t BufferManager::get_root_id(const std::string& table_path) {
+    std::ifstream file{ table_path, std::ios::binary };
+    if(!file.is_open()){
+        throw std::runtime_error(std::format("Unable to open '{}'", table_path));
+    }
+    char root_id[4];
+    file.read(root_id, sizeof(root_id));
+    return static_cast<uint32_t>(*root_id);
+}
+
+
+//TODO
 Block BufferManager::data_to_block(const ASTree*, const TableSchema&) {
     Block b;
     return b;
 }
 
+//TODO
 void BufferManager::block_to_data(const Block block, const TableSchema&) {
     (void)block;
 }

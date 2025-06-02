@@ -3,6 +3,8 @@
 
 #include <cstdlib>
 #include <cstdint>
+#include <cstring>
+#include <string>
 
 constexpr size_t PAGE_SIZE = 4096;
 
@@ -25,18 +27,24 @@ struct Block {
     char key[MAX_KEY_SIZE];
     uint16_t value_len;
     char value[MAX_VALUE_SIZE];
+
+    Block() {}
+    Block(std::string c){ std::memcpy(&key, c.data(), 3);} //temporary
 };
 #pragma pack(pop)
 
 #pragma pack(push, 1) // 4096b
-struct Page {
+struct TablePage {
     uint8_t n;
     uint8_t is_leaf;
     Block blocks[2 * T - 1]; //3584 -> T = 4
-    uint16_t offset[2 * T]; //16 -> T = 4
-    char alignment[PAGE_SIZE - sizeof(offset) - sizeof(blocks) - sizeof(n) - sizeof(is_leaf)];
-    Page() : n{ 0 }, is_leaf{ 1 } {}
-    Page(uint8_t n, uint8_t is_leaf = 1) : n{ n }, is_leaf{ is_leaf } {}
+    uint32_t children[2 * T]; //32 -> T = 4
+    uint32_t page_id;
+    char alignment[PAGE_SIZE - sizeof(children) - sizeof(blocks) - sizeof(n) - sizeof(is_leaf) - sizeof(page_id)];
+
+    TablePage() : n{ 0 }, is_leaf{ 1 } {}
+    TablePage(uint8_t is_leaf) : n{ 0 }, is_leaf{ is_leaf } {}
+    TablePage(uint8_t n, uint8_t is_leaf) : n{ n }, is_leaf{ is_leaf } {}
 };
 #pragma pack(pop)
 
