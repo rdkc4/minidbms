@@ -109,19 +109,19 @@ std::unique_ptr<Block> BTree::search(char* key, const std::string& table_path, B
     return search(std::move(root_page), key, table_path, buffer_manager);
 }
 
-void BTree::traverse(const std::string& table_path, uint32_t page_id, BufferManager& buffer_manager){
+void BTree::traverse(const std::string& table_path, uint32_t page_id, BufferManager& buffer_manager, int padding){
     auto page = buffer_manager.table_page_at(table_path, page_id);
-    std::cout << std::format("Page ID: {}, n: {}\n", page->page_id, page->n);
+    std::cout << std::format("{}Page ID: {}, n: {}\n", std::string(padding * 4, ' '), page->page_id, page->n);
     for(uint8_t i = 0; i < page->n; ++i){
-        std::cout << std::format("Block key: {}\n", page->blocks[i].key);
+        std::cout << std::format("{}Block key: {}\n", std::string(padding * 4, ' '), page->blocks[i].key);
     }
     if(page->is_leaf == 0){
         for(uint8_t i = 0; i < page->n + 1; ++i){
-            traverse(table_path, page->children[i], buffer_manager);
+            traverse(table_path, page->children[i], buffer_manager, padding + 1);
         }
     }
 }
 
 void BTree::traverse(const std::string& table_path, BufferManager& buffer_manager){
-    traverse(table_path, buffer_manager.get_root_id(table_path), buffer_manager);
+    traverse(table_path, buffer_manager.get_root_id(table_path), buffer_manager, 0);
 }

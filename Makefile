@@ -23,7 +23,7 @@ SRCS = main.cpp \
 OBJS = $(SRCS:.cpp=.o)
 
 # Output executable
-EXEC = minicpp
+EXEC = minidbms
 
 # Default target
 all: $(EXEC)

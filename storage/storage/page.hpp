@@ -9,7 +9,7 @@
 constexpr size_t PAGE_SIZE = 4096;
 
 constexpr size_t MAX_KEY_SIZE = 31;
-constexpr size_t MAX_VALUE_SIZE = 478;
+constexpr size_t MAX_VALUE_SIZE = 480;
 
 constexpr size_t T = 4;
 
@@ -23,13 +23,12 @@ struct SchemaPage {
 
 #pragma pack(push, 1) //512b
 struct Block {
-    uint8_t key_len;
+    uint8_t key_type;
     char key[MAX_KEY_SIZE];
-    uint16_t value_len;
     char value[MAX_VALUE_SIZE];
 
     Block() {}
-    Block(std::string c){ std::memcpy(&key, c.data(), 3);} //temporary
+    Block(std::string c){ std::memcpy(&key, c.data(), c.length());} //temporary
 };
 #pragma pack(pop)
 
@@ -42,9 +41,9 @@ struct TablePage {
     uint32_t page_id;
     char alignment[PAGE_SIZE - sizeof(children) - sizeof(blocks) - sizeof(n) - sizeof(is_leaf) - sizeof(page_id)];
 
-    TablePage() : n{ 0 }, is_leaf{ 1 } {}
-    TablePage(uint8_t is_leaf) : n{ 0 }, is_leaf{ is_leaf } {}
-    TablePage(uint8_t n, uint8_t is_leaf) : n{ n }, is_leaf{ is_leaf } {}
+    TablePage() : n{ 0 }, is_leaf{ 1 }, page_id{ 0 } {}
+    TablePage(uint8_t is_leaf) : n{ 0 }, is_leaf{ is_leaf }, page_id{ 0 } {}
+    TablePage(uint8_t n, uint8_t is_leaf) : n{ n }, is_leaf{ is_leaf }, page_id{ 0 } {}
 };
 #pragma pack(pop)
 

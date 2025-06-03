@@ -16,7 +16,7 @@ private:
 
     std::unique_ptr<Block> search(std::unique_ptr<TablePage>, char*, const std::string&, BufferManager&);
 
-    void traverse(const std::string&, uint32_t, BufferManager&);
+    void traverse(const std::string&, uint32_t, BufferManager&, int);
 
 public:
     void insert(Block&, BufferManager&, const std::string&);

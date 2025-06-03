@@ -1,9 +1,11 @@
 #ifndef BUFFER_MANAGER_HPP
 #define BUFFER_MANAGER_HPP
 
-#include "../../ASTree/ASTree.hpp"
+#include <memory>
+
 #include "../../SchemaCatalog/SchemaCatalog/SchemaCatalog.hpp"
 #include "../storage/page.hpp"
+#include "../../ASTree/ASTree.hpp"
 
 class BufferManager {
 public:
@@ -19,8 +21,7 @@ public:
     void update_root_id(const std::string&, uint32_t);
     uint32_t get_root_id(const std::string&);
 
-    Block data_to_block(const ASTree*, const TableSchema&);
-    void block_to_data(const Block block, const TableSchema&);
+    Block data_to_block(const ASTree*, const ASTree*, const TableSchema&);
 
 };
 

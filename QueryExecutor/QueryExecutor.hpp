@@ -4,16 +4,18 @@
 #include "../ASTree/ASTree.hpp"
 #include "../SchemaCatalog/SchemaCatalog/SchemaCatalog.hpp"
 #include "../storage/BufferManager/BufferManager.hpp"
+#include "../storage/BTree/BTree.hpp"
 
 class QueryExecutor {
 public:
-    QueryExecutor(SchemaCatalog&, BufferManager&);
+    QueryExecutor(SchemaCatalog&, BufferManager&, BTree&);
 
     void execute_script(const ASTree*);
 
 private:
     SchemaCatalog& schema_catalog;
     BufferManager buffer_manager;
+    BTree btree;
 
     const std::string SCHEMA_PATH = "metadata/schema/schema.db";
     const std::string TABLES_PATH = "metadata/tables/";

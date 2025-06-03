@@ -10,6 +10,7 @@
 #include <iostream>
 #include <filesystem>
 #include <stdexcept>
+#include <unordered_map>
 
 bool BufferManager::load_schema(const std::string& path, SchemaCatalog& schema_catalog) {
     std::ifstream file{ path, std::ios::binary };
@@ -169,6 +170,7 @@ std::unique_ptr<TablePage> BufferManager::root_table_page(const std::string& tab
 void BufferManager::write_page(const std::string& table_path, const TablePage* table_page){
     std::fstream file{ table_path, std::ios::binary | std::ios::in | std::ios::out};
     if(!file.is_open()){
+        std::cerr << std::format("Unable to open '{}'\n", table_path);
         return;
     }
     file.seekp(static_cast<std::streampos>(table_page->page_id * PAGE_SIZE + sizeof(uint32_t)));
@@ -178,13 +180,13 @@ void BufferManager::write_page(const std::string& table_path, const TablePage* t
 uint32_t BufferManager::new_page_id(const std::string& table_path) {
     std::ifstream file{ table_path, std::ios::binary | std::ios::ate };
     if(!file.is_open()){
-        return 0;
+        throw std::runtime_error(std::format("Unable to open '{}'\n", table_path));
     }
     
     std::streampos file_size = file.tellg();
     if(file_size <= static_cast<std::streampos>(sizeof(uint32_t))){
-        return 0;
-    } 
+        throw std::runtime_error(std::format("Corrupted table '{}'\n", table_path));
+    }
     return (static_cast<uint32_t>(file_size) - sizeof(uint32_t)) / PAGE_SIZE;
 }
 
@@ -199,19 +201,47 @@ uint32_t BufferManager::get_root_id(const std::string& table_path) {
     if(!file.is_open()){
         throw std::runtime_error(std::format("Unable to open '{}'", table_path));
     }
-    char root_id[4];
-    file.read(root_id, sizeof(root_id));
-    return static_cast<uint32_t>(*root_id);
+    uint32_t root_id{};
+    file.read(reinterpret_cast<char*>(&root_id), sizeof(root_id));
+    return root_id;
 }
 
-
-//TODO
-Block BufferManager::data_to_block(const ASTree*, const TableSchema&) {
-    Block b;
-    return b;
-}
-
-//TODO
-void BufferManager::block_to_data(const Block block, const TableSchema&) {
-    (void)block;
+Block BufferManager::data_to_block(const ASTree* columns, const ASTree* values, const TableSchema& table_schema) {
+    std::unordered_map<std::string, std::string> col_map;
+    Block block;
+    std::memset(&block, 0, sizeof(Block));
+    size_t offset = 0;
+    for(size_t i = 0; i < columns->children_size(); ++i){
+        col_map[columns->child_at(i)->get_token().value] = values->child_at(i)->get_token().value;
+    }
+    for(size_t i = 0; i < table_schema.columns_size(); ++i){
+        const auto& column = table_schema.get_column_at(i);
+        auto col_it = col_map.find(column.name);
+        if(col_it != col_map.end()){
+            if(column.is_key){
+                block.key_type = static_cast<uint8_t>(column.type);
+                if(column.type == DataType::NUMBER){
+                    uint32_t val = std::stoul(col_it->second);
+                    std::memcpy(block.key, &val, sizeof(val));
+                }
+                else{
+                    std::memcpy(block.key, col_it->second.c_str(), col_it->second.length());
+                }
+            }
+            else{
+                uint8_t type = static_cast<uint8_t>(column.type);
+                std::memcpy(block.value + offset, &type, sizeof(type));
+                if(column.type == DataType::NUMBER){
+                    uint32_t val = std::stoul(col_it->second);
+                    std::memcpy(block.value + offset + sizeof(type), &val, sizeof(val));
+                    offset += sizeof(val) + sizeof(type);
+                }
+                else{
+                    std::memcpy(block.value + offset + sizeof(type), col_it->second.c_str(), col_it->second.length());
+                    offset += 20 + sizeof(type);
+                }
+            }
+        }   
+    }
+    return block;
 }

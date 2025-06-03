@@ -1,6 +1,7 @@
 #include "QueryExecutor.hpp"
 
-QueryExecutor::QueryExecutor(SchemaCatalog& schema_catalog, BufferManager& buffer_manager) : schema_catalog{ schema_catalog }, buffer_manager{buffer_manager} {}
+QueryExecutor::QueryExecutor(SchemaCatalog& schema_catalog, BufferManager& buffer_manager, BTree& btree) : 
+    schema_catalog{ schema_catalog }, buffer_manager{buffer_manager}, btree{ btree } {}
 
 void QueryExecutor::execute_script(const ASTree* script) {
     for(const auto& query : script->get_children()){
@@ -45,10 +46,15 @@ void QueryExecutor::execute_create(const ASTree* create) {
         table_schema.add_column(col);
     }
     buffer_manager.save_schema(SCHEMA_PATH, TABLES_PATH, table_schema);
+    schema_catalog.add_table(table_schema);
 }
 
 void QueryExecutor::execute_insert(const ASTree* insert) {
-    (void)insert;
+    auto table_schema = schema_catalog.get_table(insert->child_at(0)->get_token().value);
+    if(table_schema.has_value()){
+        Block block = buffer_manager.data_to_block(insert->child_at(1), insert->child_at(2), table_schema.value().get());
+        btree.insert(block, buffer_manager, std::format("{}{}.db", TABLES_PATH, table_schema.value().get().get_table_name()));
+    }
 }
 
 void QueryExecutor::execute_update(const ASTree* update) {
