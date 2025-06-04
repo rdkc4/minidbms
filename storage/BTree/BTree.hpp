@@ -16,14 +16,14 @@ private:
 
     std::unique_ptr<Block> search(std::unique_ptr<TablePage>, char*, const std::string&, BufferManager&);
 
-    void traverse(const std::string&, uint32_t, BufferManager&, int);
+    void traverse(const std::string&, uint32_t, BufferManager&, const TableSchema&, int);
 
 public:
     void insert(Block&, BufferManager&, const std::string&);
 
     std::unique_ptr<Block> search(char*, const std::string&, BufferManager&);
 
-    void traverse(const std::string&, BufferManager&);
+    void traverse(const std::string&, BufferManager&, const TableSchema&);
 };
 
 #endif

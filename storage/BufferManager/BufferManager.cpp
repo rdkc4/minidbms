@@ -11,6 +11,8 @@
 #include <filesystem>
 #include <stdexcept>
 #include <unordered_map>
+#include <variant>
+#include <vector>
 
 bool BufferManager::load_schema(const std::string& path, SchemaCatalog& schema_catalog) {
     std::ifstream file{ path, std::ios::binary };
@@ -210,12 +212,13 @@ Block BufferManager::data_to_block(const ASTree* columns, const ASTree* values, 
     std::unordered_map<std::string, std::string> col_map;
     Block block;
     std::memset(&block, 0, sizeof(Block));
-    size_t offset = 0;
+    size_t offset{ 0 };
     for(size_t i = 0; i < columns->children_size(); ++i){
         col_map[columns->child_at(i)->get_token().value] = values->child_at(i)->get_token().value;
     }
-    for(size_t i = 0; i < table_schema.columns_size(); ++i){
-        const auto& column = table_schema.get_column_at(i);
+    const size_t columns_size{ table_schema.columns_size() };
+    for(size_t i = 0; i < columns_size; ++i){
+        const Column& column{ table_schema.get_column_at(i) };
         auto col_it = col_map.find(column.name);
         if(col_it != col_map.end()){
             if(column.is_key){
@@ -234,14 +237,47 @@ Block BufferManager::data_to_block(const ASTree* columns, const ASTree* values, 
                 if(column.type == DataType::NUMBER){
                     uint32_t val = std::stoul(col_it->second);
                     std::memcpy(block.value + offset + sizeof(type), &val, sizeof(val));
-                    offset += sizeof(val) + sizeof(type);
                 }
                 else{
                     std::memcpy(block.value + offset + sizeof(type), col_it->second.c_str(), col_it->second.length());
-                    offset += 20 + sizeof(type);
                 }
             }
+            offset += (column.is_key ?  0 : (sizeof(DataType) + (column.type == DataType::VARCHAR ? 20 : sizeof(uint32_t))));
         }   
     }
     return block;
+}
+
+
+std::unordered_map<std::string, std::variant<std::string, uint32_t>> BufferManager::block_to_data(const Block& block, const TableSchema& table_schema) {
+    std::unordered_map<std::string, std::variant<std::string, uint32_t>> data;
+    const size_t columns_size{ table_schema.columns_size() };
+    size_t offset{ 0 };
+    for(size_t i = 0; i < columns_size; ++i){
+        const Column& column{ table_schema.get_column_at(i) };
+        if(column.is_key){
+            if(static_cast<DataType>(block.key_type) == DataType::VARCHAR){
+                data[column.name] = std::string{ block.key };
+            }
+            else{
+                uint32_t val{};
+                std::memcpy(&val, block.key, sizeof(val));
+                data[column.name] = val;
+            }
+        }
+        else{
+            DataType type;
+            std::memcpy(&type, block.value + offset, sizeof(DataType));
+            if(type == DataType::VARCHAR){
+                data[column.name] = std::string { block.value + offset + sizeof(DataType) };
+            }
+            else{
+                uint32_t val{};
+                std::memcpy(&val, block.value + offset + sizeof(DataType), sizeof(val));
+                data[column.name] = val;
+            }
+            offset += sizeof(DataType) + (type == DataType::VARCHAR ? 20 : sizeof(uint32_t));
+        }
+    }
+    return data;
 }

@@ -22,6 +22,7 @@ public:
     uint32_t get_root_id(const std::string&);
 
     Block data_to_block(const ASTree*, const ASTree*, const TableSchema&);
+    std::unordered_map<std::string, std::variant<std::string, uint32_t>> block_to_data(const Block&, const TableSchema&);
 
 };
 

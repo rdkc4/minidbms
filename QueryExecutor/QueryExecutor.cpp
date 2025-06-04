@@ -55,6 +55,7 @@ void QueryExecutor::execute_insert(const ASTree* insert) {
         Block block = buffer_manager.data_to_block(insert->child_at(1), insert->child_at(2), table_schema.value().get());
         btree.insert(block, buffer_manager, std::format("{}{}.db", TABLES_PATH, table_schema.value().get().get_table_name()));
     }
+    btree.traverse(std::format("{}{}{}", TABLES_PATH, table_schema.value().get().get_table_name(), ".db"), buffer_manager, table_schema.value().get());
 }
 
 void QueryExecutor::execute_update(const ASTree* update) {
