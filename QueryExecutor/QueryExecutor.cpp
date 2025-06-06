@@ -67,5 +67,5 @@ void QueryExecutor::execute_delete(const ASTree* _delete) {
 }
 
 void QueryExecutor::execute_drop(const ASTree* drop) {
-    buffer_manager.delete_schema(SCHEMA_PATH, TABLES_PATH, drop->child_at(0)->get_token().value, schema_catalog);
+    buffer_manager.delete_schema(SCHEMA_PATH.generic_string(), TABLES_PATH.generic_string(), drop->child_at(0)->get_token().value, schema_catalog);
 }
