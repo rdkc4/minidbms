@@ -2,6 +2,7 @@
 #define BUFFER_MANAGER_HPP
 
 #include <memory>
+#include <variant>
 
 #include "../../SchemaCatalog/SchemaCatalog/SchemaCatalog.hpp"
 #include "../storage/page.hpp"
