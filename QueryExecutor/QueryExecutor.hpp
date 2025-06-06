@@ -5,6 +5,7 @@
 #include "../SchemaCatalog/SchemaCatalog/SchemaCatalog.hpp"
 #include "../storage/BufferManager/BufferManager.hpp"
 #include "../storage/BTree/BTree.hpp"
+#include <filesystem>
 
 class QueryExecutor {
 public:
@@ -17,8 +18,9 @@ private:
     BufferManager buffer_manager;
     BTree btree;
 
-    const std::string SCHEMA_PATH = "metadata/schema/schema.db";
-    const std::string TABLES_PATH = "metadata/tables/";
+    const std::filesystem::path METADATA_PATH{ "metadata" };
+    const std::filesystem::path SCHEMA_PATH =  METADATA_PATH / "schema" / "schema.db";
+    const std::filesystem::path TABLES_PATH = METADATA_PATH / "tables/";
 
     void execute_query(const ASTree*);
     void execute_select(const ASTree*);
