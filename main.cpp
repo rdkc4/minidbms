@@ -2,6 +2,7 @@
 #include <format>
 #include <iostream>
 #include <cassert>
+#include <filesystem>
 
 #include "QueryExecutor/QueryExecutor.hpp"
 #include "SchemaCatalog/SchemaCatalog/SchemaCatalog.hpp"
@@ -52,6 +53,20 @@ Error mini_test(const std::string& script){
 
 int main(){
     
+    std::filesystem::path base = "metadata";
+    std::filesystem::path schema = base / "schema";
+    std::filesystem::path tables = base / "tables";
+
+    if(!std::filesystem::exists(base)){
+        std::filesystem::create_directory(base);
+    }
+    if(!std::filesystem::exists(schema)){
+        std::filesystem::create_directory(schema);
+    }
+    if(!std::filesystem::exists(tables)){
+        std::filesystem::create_directory(tables);
+    }
+
     std::string successful1{ std::format("{}{}", "CREATE TABLE something (PRIMARY KEY NUMBER A, VARCHAR B);",
                                                         "CREATE TABLE tab (VARCHAR A, PRIMARY KEY VARCHAR B, VARCHAR C, NUMBER X);") };
     std::string successful2{ std::format("{}{}", "SELECT * FROM something;", 

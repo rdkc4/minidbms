@@ -20,7 +20,7 @@ ifeq ($(OS),Windows_NT)
 		storage/BTree/BTree.cpp \
 		QueryExecutor/QueryExecutor.cpp
 
-	SRCS = $(subst /,\\,$(SRCS_RAW))
+	SRCS = $(subst /,\,$(SRCS_RAW))
 	LIBS = -lWs2_32
 else
     # Assume Unix/Linux
