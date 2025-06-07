@@ -32,6 +32,9 @@ private:
     void duplicate_columns(const ASTree*) const;
     void analyze_insert_types(const TableSchema&, const ASTree*, const ASTree*) const;
     void analyze_keys(const ASTree*) const;
+    void analyze_column_name(const ASTree*) const;
+    void analyze_value(const ASTree*) const;
+    void analyze_required_memory(const ASTree* columns) const;
 
 };
 

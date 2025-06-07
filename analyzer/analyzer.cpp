@@ -1,10 +1,14 @@
 #include "analyzer.hpp"
 
+#include <cstdint>
 #include <format>
 #include <memory>
 #include <optional>
 #include <stdexcept>
+#include <string>
 #include <unordered_set>
+
+#include "../storage/storage/page.hpp"
 
 Analyzer::Analyzer(const SchemaCatalog& schema_catalog) : schema_catalog{ schema_catalog } {} 
 
@@ -43,7 +47,7 @@ void Analyzer::analyze_select(const ASTree* select) const {
     const std::string& table_name{ select->child_at(1)->get_token().value };
     analyze_table(table_name);
     
-    auto table_schema{ schema_catalog.get_table(table_name).value().get() };
+    TableSchema table_schema{ schema_catalog.get_table(table_name).value().get() };
     analyze_columns(table_schema, select->child_at(0));
     duplicate_columns(select->child_at(0));
 
@@ -61,13 +65,15 @@ void Analyzer::analyze_create(const ASTree* create) const {
     analyze_table(table_name, false);
     duplicate_columns(create->child_at(1));
     analyze_keys(create->child_at(1));
+    analyze_column_name(create->child_at(1));
+    analyze_required_memory(create->child_at(1));
 }
 
 void Analyzer::analyze_insert(const ASTree* insert) const {
     const std::string& table_name{ insert->child_at(0)->get_token().value };
     analyze_table(table_name);
 
-    auto table_schema{ schema_catalog.get_table(table_name).value().get() };
+    TableSchema table_schema{ schema_catalog.get_table(table_name).value().get() };
     analyze_columns(table_schema, insert->child_at(1));
     duplicate_columns(insert->child_at(1));
 
@@ -82,7 +88,8 @@ void Analyzer::analyze_insert_types(const TableSchema& table_schema, const ASTre
     bool has_key{ false };
     for(size_t i = 0; i < n; ++i){
         const Column& column{ table_schema.get_column(columns->child_at(i)->get_token().value)->get() };
-        const DataType& literal_type{ literal_to_type.at(values->child_at(i)->get_token().token_type) };
+        const ASTree* value = values->child_at(i);
+        const DataType& literal_type{ literal_to_type.at(value->get_token().token_type) };
         if(column.type != literal_type){
             throw std::runtime_error(std::format("Type mismatch: expected '{}' got '{}'", 
                 data_type_str.at(column.type), data_type_str.at(literal_type)));
@@ -90,6 +97,7 @@ void Analyzer::analyze_insert_types(const TableSchema& table_schema, const ASTre
         if(column.is_key){
             has_key = true;
         }
+        analyze_value(value);
     } 
     if(!has_key){
         throw std::runtime_error("Insertion failed, no key provided\n");
@@ -100,7 +108,7 @@ void Analyzer::analyze_update(const ASTree* update) const {
     const std::string& table_name{ update->child_at(0)->get_token().value };
     analyze_table(table_name);
 
-    auto table_schema{ schema_catalog.get_table(table_name).value().get() };
+    TableSchema table_schema{ schema_catalog.get_table(table_name).value().get() };
     analyze_assignments(table_schema, update->child_at(1));
 
     if(update->children_size() > 2){
@@ -143,6 +151,9 @@ void Analyzer::analyze_orderby(const TableSchema& table_schema, const ASTree* or
 }
 
 void Analyzer::analyze_table(const std::string& table_name, bool should_exist) const {
+    if(table_name.length() >= MAX_TABLE_LEN) {
+        throw std::runtime_error(std::format("Maximum length for a table's name is {}, received {}\n", MAX_TABLE_LEN - 1, table_name.length()));
+    }
     bool exists{ schema_catalog.get_table(table_name) != std::nullopt };
     if(exists != should_exist){
         throw std::runtime_error(std::format("Table '{}' {}\n", table_name, should_exist ? "doesn't exist" : "already exists"));
@@ -157,11 +168,13 @@ void Analyzer::analyze_assignments(const TableSchema& table_schema, const ASTree
 void Analyzer::analyze_assignment_type(const TableSchema& table_schema, const ASTree* assignments) const {
     for(const auto& column : assignments->get_children()){
         const DataType& column_type{ table_schema.get_column(column->get_token().value)->get().type };
-        const DataType& literal_type{ literal_to_type.at(column->child_at(0)->get_token().token_type) };
+        const ASTree* value = column->child_at(0);
+        const DataType& literal_type{ literal_to_type.at(value->get_token().token_type) };
         if(column_type != literal_type){
             throw std::runtime_error(std::format("Type mismatch: expected '{}' got '{}'", 
                 data_type_str.at(column_type), data_type_str.at(literal_type)));
         }
+        analyze_value(value);
     }
 }
 
@@ -203,5 +216,47 @@ void Analyzer::analyze_keys(const ASTree* columns) const {
     }
     else if(keys_number > 1){
         throw std::runtime_error("Table has multiple keys\n");
+    }
+}
+
+void Analyzer::analyze_column_name(const ASTree* columns) const {
+    for(const auto& column : columns->get_children()){
+        const size_t column_name_len = column->get_token().value.length();
+        if(column_name_len >= MAX_COLUMN_LEN) {
+            throw std::runtime_error(std::format("Maximum length of varchar is {}, received {}\n", MAX_COLUMN_LEN - 1, column_name_len));
+        }
+    }
+}
+
+void Analyzer::analyze_value(const ASTree* value) const {
+    const Token& value_token = value->get_token();
+    const size_t value_len = value_token.value.length();
+    std::string max_num = std::to_string(INT32_MAX);
+    if(value_token.token_type == TokenType::STRING_LITERAL && value_len >= MAX_STRING_LEN) {
+        throw std::runtime_error(std::format("Maximum length of varchar is {}, received {}\n", MAX_STRING_LEN - 1, value_len));
+    }
+    else if(value->get_token().token_type == TokenType::NUMBER_LITERAL && (value_len > max_num.length() || 
+        (value_len == max_num.length() && value->get_token().value > max_num))){
+        
+        throw std::runtime_error(std::format("Maximum value of a number is {}, received {}\n", max_num, value->get_token().value));
+    }
+}
+
+void Analyzer::analyze_required_memory(const ASTree* columns) const {
+    size_t required_memory{ 0 };
+    for(const auto& column : columns->get_children()){
+        if(column->children_size() > 1){
+            required_memory += MAX_KEY_SIZE + sizeof(DataType);
+        }
+        else if(column->child_at(0)->get_token().token_type == TokenType::VARCHAR){
+            required_memory += MAX_STRING_LEN + sizeof(DataType);
+        }
+        else{
+            required_memory += sizeof(uint32_t) + sizeof(DataType);
+        }
+    }
+    required_memory += sizeof(uint8_t); // is_deleted
+    if(required_memory > BLOCK_SIZE_) {
+        throw std::runtime_error(std::format("Maximum block size is {}B, requested {}B\n", BLOCK_SIZE_, required_memory));
     }
 }

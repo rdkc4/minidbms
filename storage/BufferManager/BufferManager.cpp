@@ -27,9 +27,9 @@ bool BufferManager::load_schema(const std::string& path, SchemaCatalog& schema_c
         std::cerr << std::format("Unable to open '{}'", path);
         return false;
     }
-    std::array<char, PAGE_SIZE> buffer;
+    std::array<char, PAGE_SIZE_> buffer;
 
-    while(file.read(buffer.data(), PAGE_SIZE)) {
+    while(file.read(buffer.data(), PAGE_SIZE_)) {
         uint32_t table_name_len, column_number;
         std::memcpy(&table_name_len, buffer.data(), sizeof(uint32_t));
         std::memcpy(&column_number, buffer.data() + sizeof(uint32_t), sizeof(uint32_t));
@@ -104,8 +104,8 @@ void BufferManager::delete_schema(const std::string& schema_path, const std::str
     }
     bool found = false;
     size_t current_page = 0;
-    std::array<char, PAGE_SIZE> buffer;
-    while(file.read(buffer.data(), PAGE_SIZE)){
+    std::array<char, PAGE_SIZE_> buffer;
+    while(file.read(buffer.data(), PAGE_SIZE_)){
         uint32_t table_name_len;
         std::memcpy(&table_name_len, buffer.data(), sizeof(uint32_t));
         table_name_len = ntohl(table_name_len);
@@ -121,18 +121,18 @@ void BufferManager::delete_schema(const std::string& schema_path, const std::str
     if(!found) return;
 
     std::streampos src_offset = file.tellg();
-    std::streampos dst_offset = current_page * PAGE_SIZE;
+    std::streampos dst_offset = current_page * PAGE_SIZE_;
 
     while (true) {
         file.seekg(src_offset);
-        file.read(buffer.data(), PAGE_SIZE);
+        file.read(buffer.data(), PAGE_SIZE_);
         if (file.gcount() == 0) break;
 
         file.seekp(dst_offset);
-        file.write(buffer.data(), PAGE_SIZE);
+        file.write(buffer.data(), PAGE_SIZE_);
 
-        src_offset += PAGE_SIZE;
-        dst_offset += PAGE_SIZE;
+        src_offset += PAGE_SIZE_;
+        dst_offset += PAGE_SIZE_;
     }
     std::filesystem::resize_file(schema_path, dst_offset);
     schema_catalog.drop_table(table_name);
@@ -145,16 +145,16 @@ std::unique_ptr<TablePage> BufferManager::table_page_at(const std::string& table
         return nullptr;
     }
 
-    file.seekg(static_cast<std::streampos>(sizeof(uint32_t) + page_id * PAGE_SIZE));
+    file.seekg(static_cast<std::streampos>(sizeof(uint32_t) + page_id * PAGE_SIZE_));
     if(!file || file.eof()) return nullptr;
 
-    std::array<char, PAGE_SIZE> buffer;
-    file.read(buffer.data(), PAGE_SIZE);
+    std::array<char, PAGE_SIZE_> buffer;
+    file.read(buffer.data(), PAGE_SIZE_);
     
-    if(file.gcount() != PAGE_SIZE) return nullptr;
+    if(file.gcount() != PAGE_SIZE_) return nullptr;
 
     std::unique_ptr<TablePage> table_page = std::make_unique<TablePage>();
-    std::memcpy(table_page.get(), buffer.data(), PAGE_SIZE);
+    std::memcpy(table_page.get(), buffer.data(), PAGE_SIZE_);
     
     for(uint8_t i = 0; i < table_page->n + 1; ++i){
         table_page->children[i] = ntohl(table_page->children[i]);
@@ -169,7 +169,7 @@ std::unique_ptr<TablePage> BufferManager::root_table_page(const std::string& tab
     if(!file.is_open()) {
         return nullptr;
     }
-    std::array<char, PAGE_SIZE> buffer;
+    std::array<char, PAGE_SIZE_> buffer;
     file.read(buffer.data(), sizeof(uint32_t));
     if(file.gcount() != sizeof(uint32_t)) return nullptr;
 
@@ -177,12 +177,12 @@ std::unique_ptr<TablePage> BufferManager::root_table_page(const std::string& tab
     std::memcpy(&root_id, buffer.data(), sizeof(uint32_t));
     root_id = ntohl(root_id);
 
-    file.seekg(static_cast<std::streampos>(PAGE_SIZE * root_id + sizeof(uint32_t)));
-    file.read(buffer.data(), PAGE_SIZE);
-    if(file.gcount() != PAGE_SIZE) return nullptr;
+    file.seekg(static_cast<std::streampos>(PAGE_SIZE_ * root_id + sizeof(uint32_t)));
+    file.read(buffer.data(), PAGE_SIZE_);
+    if(file.gcount() != PAGE_SIZE_) return nullptr;
 
     TablePage table_page;
-    std::memcpy(&table_page, buffer.data(), PAGE_SIZE);
+    std::memcpy(&table_page, buffer.data(), PAGE_SIZE_);
 
     for(uint8_t i = 0; i < table_page.n + 1; ++i){
         table_page.children[i] = ntohl(table_page.children[i]);
@@ -204,8 +204,8 @@ void BufferManager::write_page(const std::string& table_path, const TablePage* t
     }
     page.page_id = htonl(page.page_id);
     
-    file.seekp(static_cast<std::streampos>(table_page->page_id * PAGE_SIZE + sizeof(uint32_t)));
-    file.write(reinterpret_cast<const char*>(&page), PAGE_SIZE);    
+    file.seekp(static_cast<std::streampos>(table_page->page_id * PAGE_SIZE_ + sizeof(uint32_t)));
+    file.write(reinterpret_cast<const char*>(&page), PAGE_SIZE_);    
 }
 
 uint32_t BufferManager::new_page_id(const std::string& table_path) {
@@ -218,7 +218,7 @@ uint32_t BufferManager::new_page_id(const std::string& table_path) {
     if(file_size <= static_cast<std::streampos>(sizeof(uint32_t))){
         throw std::runtime_error(std::format("Corrupted table '{}'\n", table_path));
     }
-    return (static_cast<uint32_t>(file_size) - sizeof(uint32_t)) / PAGE_SIZE;
+    return (static_cast<uint32_t>(file_size) - sizeof(uint32_t)) / PAGE_SIZE_;
 }
 
 void BufferManager::update_root_id(const std::string& table_path, uint32_t root_id) {
