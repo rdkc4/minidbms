@@ -9,6 +9,7 @@
 #include "lexer/lexer.hpp"
 #include "parser/parser.hpp"
 #include "analyzer/analyzer.hpp"
+#include "storage/BTree/BTree.hpp"
 #include "storage/BufferManager/BufferManager.hpp"
 
 enum class Error { LEXICAL_ERR, SYNTAX_ERR, SEMANTIC_ERR, NO_ERR };

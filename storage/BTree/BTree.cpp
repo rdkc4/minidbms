@@ -131,3 +131,17 @@ void BTree::traverse(const std::string& table_path, uint32_t page_id, BufferMana
 void BTree::traverse(const std::string& table_path, BufferManager& buffer_manager, const TableSchema& table_schema){
     traverse(table_path, buffer_manager.get_root_id(table_path), buffer_manager, table_schema, 0);
 }
+
+void BTree::del(const std::string& table_path, BufferManager& buffer_manager, const TableSchema& table_schema, const ASTree* _delete){
+    if(_delete->children_size() == 1){
+        buffer_manager.delete_table_data(table_path);
+    }
+    else{
+        del_blocks(table_path, buffer_manager, table_schema, _delete->child_at(1));
+    }
+}
+
+//TODO deletion with condition
+void BTree::del_blocks(const std::string&, BufferManager&, const TableSchema&, const ASTree*){
+
+}

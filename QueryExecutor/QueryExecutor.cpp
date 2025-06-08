@@ -1,4 +1,5 @@
 #include "QueryExecutor.hpp"
+#include <format>
 
 QueryExecutor::QueryExecutor(SchemaCatalog& schema_catalog, BufferManager& buffer_manager, BTree& btree) : 
     schema_catalog{ schema_catalog }, buffer_manager{buffer_manager}, btree{ btree } {}
@@ -63,7 +64,11 @@ void QueryExecutor::execute_update(const ASTree* update) {
 }
 
 void QueryExecutor::execute_delete(const ASTree* _delete) {
-    (void)_delete;
+    auto table_schema = schema_catalog.get_table(_delete->child_at(0)->get_token().value);
+    if(table_schema.has_value()){
+        btree.del(std::format("{}{}{}", TABLES_PATH.generic_string(), table_schema.value().get().get_table_name(), ".db"), buffer_manager, table_schema.value().get(), _delete);
+    }
+    btree.traverse(std::format("{}{}{}", TABLES_PATH.generic_string(), table_schema.value().get().get_table_name(), ".db"), buffer_manager, table_schema.value().get());
 }
 
 void QueryExecutor::execute_drop(const ASTree* drop) {

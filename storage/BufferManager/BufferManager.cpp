@@ -1,7 +1,6 @@
 #include "BufferManager.hpp"
 
 #include <array>
-#include <cassert>
 #include <cstdint>
 #include <cstring>
 #include <format>
@@ -21,7 +20,7 @@
     #include <arpa/inet.h>
 #endif
 
-bool BufferManager::load_schema(const std::string& path, SchemaCatalog& schema_catalog) {
+bool BufferManager::load_schema(const std::string& path, SchemaCatalog& schema_catalog) const {
     std::ifstream file{ path, std::ios::binary };
     if(!file.is_open()){
         std::cerr << std::format("Unable to open '{}'", path);
@@ -63,7 +62,7 @@ bool BufferManager::load_schema(const std::string& path, SchemaCatalog& schema_c
     return true;
 }
 
-void BufferManager::save_schema(const std::string& schema_path, const std::string& table_path, const TableSchema& table_schema) {
+void BufferManager::save_schema(const std::string& schema_path, const std::string& table_path, const TableSchema& table_schema) const {
     SchemaPage schema_page;
     schema_page.table_name_len = htonl(static_cast<uint32_t>(table_schema.get_table_name().size()));
     schema_page.column_number = htonl(static_cast<uint32_t>(table_schema.columns_size()));
@@ -88,15 +87,11 @@ void BufferManager::save_schema(const std::string& schema_path, const std::strin
         }
         os.write(reinterpret_cast<const char*>(&schema_page), sizeof(schema_page));
     }
-    std::ofstream os{table_path + table_schema.get_table_name() + ".db", std::ios::binary};
-    TablePage table_page;
-    uint32_t initial_root_id = 0;
-    os.write(reinterpret_cast<const char*>(&initial_root_id), sizeof(initial_root_id)); //offset of a root on first 4 bytes
-    os.write(reinterpret_cast<const char*>(&table_page), sizeof(table_page));
+    init_table(std::format("{}{}{}", table_path, table_schema.get_table_name(), ".db"));
 }
 
 // should optimize, instead of shifting, just swap with the last one
-void BufferManager::delete_schema(const std::string& schema_path, const std::string& table_path, const std::string& table_name, SchemaCatalog& schema_catalog) {
+void BufferManager::delete_schema(const std::string& schema_path, const std::string& table_path, const std::string& table_name, SchemaCatalog& schema_catalog) const {
     std::fstream file{ schema_path, std::ios::in | std::ios::out | std::ios::binary};
     if(!file.is_open()){
         std::cerr << std::format("Unable to open '{}'\n", schema_path);
@@ -139,7 +134,7 @@ void BufferManager::delete_schema(const std::string& schema_path, const std::str
     std::filesystem::remove(table_path + table_name + ".db");
 }
 
-std::unique_ptr<TablePage> BufferManager::table_page_at(const std::string& table_path, uint32_t page_id){
+std::unique_ptr<TablePage> BufferManager::table_page_at(const std::string& table_path, uint32_t page_id) const {
     std::ifstream file{ table_path, std::ios::binary };
     if(!file.is_open()) {
         return nullptr;
@@ -164,7 +159,7 @@ std::unique_ptr<TablePage> BufferManager::table_page_at(const std::string& table
     return table_page;
 }
 
-std::unique_ptr<TablePage> BufferManager::root_table_page(const std::string& table_path){
+std::unique_ptr<TablePage> BufferManager::root_table_page(const std::string& table_path) const {
     std::ifstream file{ table_path, std::ios::binary };
     if(!file.is_open()) {
         return nullptr;
@@ -192,7 +187,7 @@ std::unique_ptr<TablePage> BufferManager::root_table_page(const std::string& tab
     return std::make_unique<TablePage>(table_page);
 }
 
-void BufferManager::write_page(const std::string& table_path, const TablePage* table_page){
+void BufferManager::write_page(const std::string& table_path, const TablePage* table_page) const {
     std::fstream file{ table_path, std::ios::binary | std::ios::in | std::ios::out};
     if(!file.is_open()){
         std::cerr << std::format("Unable to open '{}'\n", table_path);
@@ -208,7 +203,7 @@ void BufferManager::write_page(const std::string& table_path, const TablePage* t
     file.write(reinterpret_cast<const char*>(&page), PAGE_SIZE_);    
 }
 
-uint32_t BufferManager::new_page_id(const std::string& table_path) {
+uint32_t BufferManager::new_page_id(const std::string& table_path) const {
     std::ifstream file{ table_path, std::ios::binary | std::ios::ate };
     if(!file.is_open()){
         throw std::runtime_error(std::format("Unable to open '{}'\n", table_path));
@@ -221,7 +216,7 @@ uint32_t BufferManager::new_page_id(const std::string& table_path) {
     return (static_cast<uint32_t>(file_size) - sizeof(uint32_t)) / PAGE_SIZE_;
 }
 
-void BufferManager::update_root_id(const std::string& table_path, uint32_t root_id) {
+void BufferManager::update_root_id(const std::string& table_path, uint32_t root_id) const {
     std::fstream file{ table_path, std::ios::binary | std::ios::in | std::ios::out };
     file.seekp(std::ios::beg);
 
@@ -229,7 +224,7 @@ void BufferManager::update_root_id(const std::string& table_path, uint32_t root_
     file.write(reinterpret_cast<const char*>(&root_id), sizeof(root_id));
 }
 
-uint32_t BufferManager::get_root_id(const std::string& table_path) {
+uint32_t BufferManager::get_root_id(const std::string& table_path) const {
     std::ifstream file{ table_path, std::ios::binary };
     if(!file.is_open()){
         throw std::runtime_error(std::format("Unable to open '{}'", table_path));
@@ -239,7 +234,7 @@ uint32_t BufferManager::get_root_id(const std::string& table_path) {
     return ntohl(root_id);
 }
 
-Block BufferManager::data_to_block(const ASTree* columns, const ASTree* values, const TableSchema& table_schema) {
+Block BufferManager::data_to_block(const ASTree* columns, const ASTree* values, const TableSchema& table_schema) const {
     std::unordered_map<std::string, std::string> col_map;
     Block block;
 
@@ -279,7 +274,7 @@ Block BufferManager::data_to_block(const ASTree* columns, const ASTree* values, 
     return block;
 }
 
-std::unordered_map<std::string, std::variant<std::string, uint32_t>> BufferManager::block_to_data(const Block& block, const TableSchema& table_schema) {
+std::unordered_map<std::string, std::variant<std::string, uint32_t>> BufferManager::block_to_data(const Block& block, const TableSchema& table_schema) const {
     std::unordered_map<std::string, std::variant<std::string, uint32_t>> data;
     const size_t columns_size{ table_schema.columns_size() };
     size_t offset{ 0 };
@@ -310,4 +305,20 @@ std::unordered_map<std::string, std::variant<std::string, uint32_t>> BufferManag
         }
     }
     return data;
+}
+
+void BufferManager::delete_table_data(const std::string& table_path) const {
+    std::filesystem::resize_file(table_path, 0);
+    init_table(table_path);
+}
+
+void BufferManager::init_table(const std::string& table_path) const {
+    std::ofstream os{ table_path, std::ios::binary };
+    if(!os.is_open()){
+        throw std::runtime_error(std::format("Unable to open '{}'\n", table_path));
+    }
+    TablePage table_page;
+    uint32_t initial_root_id = 0;
+    os.write(reinterpret_cast<const char*>(&initial_root_id), sizeof(initial_root_id)); //offset of a root on first 4 bytes
+    os.write(reinterpret_cast<const char*>(&table_page), sizeof(table_page));
 }
