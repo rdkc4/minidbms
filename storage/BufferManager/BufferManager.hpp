@@ -24,7 +24,7 @@ public:
 
     Block data_to_block(const ASTree*, const ASTree*, const TableSchema&) const;
     std::unordered_map<std::string, std::variant<std::string, uint32_t>> block_to_data(const Block&, const TableSchema&) const;
-    void delete_table_data(const std::string& table_path) const;
+    void delete_all_data(const std::string& table_path) const;
 
     void init_table(const std::string& table_path) const;
 

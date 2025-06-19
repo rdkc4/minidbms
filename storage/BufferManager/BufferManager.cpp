@@ -307,7 +307,7 @@ std::unordered_map<std::string, std::variant<std::string, uint32_t>> BufferManag
     return data;
 }
 
-void BufferManager::delete_table_data(const std::string& table_path) const {
+void BufferManager::delete_all_data(const std::string& table_path) const {
     std::filesystem::resize_file(table_path, 0);
     init_table(table_path);
 }

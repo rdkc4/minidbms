@@ -20,6 +20,8 @@ private:
 
     void del_blocks(const std::string&, BufferManager&, const TableSchema&, const ASTree*);
 
+    void select_no_condition(const std::string&, uint32_t, BufferManager&, const TableSchema&, const ASTree*);
+
 public:
     void insert(Block&, BufferManager&, const std::string&);
 
@@ -28,6 +30,9 @@ public:
     void traverse(const std::string&, BufferManager&, const TableSchema&);
 
     void del(const std::string&, BufferManager&, const TableSchema&, const ASTree*);
+
+    void select(const std::string&, BufferManager&, const TableSchema&, const ASTree*);
+
 };
 
 #endif

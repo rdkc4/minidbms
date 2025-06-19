@@ -49,6 +49,10 @@ void Lexer::tokenize() {
     //print_tokens();
 }
 
+bool Lexer::completedTokenization() const noexcept {
+    return tokens.size() > 0 && tokens.back().token_type == TokenType::END;
+}
+
 const Token& Lexer::token_at(size_t n) const noexcept {
     return n < tokens.size() ? tokens[n] : tokens.back();
 }

@@ -134,7 +134,7 @@ void BTree::traverse(const std::string& table_path, BufferManager& buffer_manage
 
 void BTree::del(const std::string& table_path, BufferManager& buffer_manager, const TableSchema& table_schema, const ASTree* _delete){
     if(_delete->children_size() == 1){
-        buffer_manager.delete_table_data(table_path);
+        buffer_manager.delete_all_data(table_path);
     }
     else{
         del_blocks(table_path, buffer_manager, table_schema, _delete->child_at(1));
@@ -144,4 +144,47 @@ void BTree::del(const std::string& table_path, BufferManager& buffer_manager, co
 //TODO deletion with condition
 void BTree::del_blocks(const std::string&, BufferManager&, const TableSchema&, const ASTree*){
 
+}
+
+// conditions aren't implemented at the moment
+void BTree::select(const std::string& table_path, BufferManager& buffer_manager, const TableSchema& table_schema, const ASTree* _select){
+    if(_select->children_size() < 3 || (_select->children_size() == 3 && _select->child_at(3)->get_type() != ASTNodeType::CONDITION)){
+        uint32_t root_id = buffer_manager.get_root_id(table_path);
+        select_no_condition(table_path, root_id, buffer_manager, table_schema, _select);
+    }
+}
+
+void BTree::select_no_condition(const std::string& table_path, uint32_t page_id, BufferManager& buffer_manager, const TableSchema& table_schema, const ASTree* _select){
+    auto page = buffer_manager.table_page_at(table_path, page_id);
+    for(uint32_t i = 0; i < page->n; ++i){
+        if(!page->is_leaf){
+            select_no_condition(table_path, page->children[i], buffer_manager, table_schema, _select);
+        }
+        
+        if(page->blocks[i].is_deleted) continue;
+
+        std::string line;
+        auto block_data = buffer_manager.block_to_data(page->blocks[i], table_schema);
+        bool select_all = _select->child_at(0)->child_at(0)->get_token().token_type == TokenType::ASTERISK;
+
+        if(select_all){
+            for(const auto& col : table_schema.get_columns()){
+                std::visit([&](const auto& val) {
+                    line += std::format("{}: {}|", col.name, val);
+                }, block_data[col.name]);
+            }
+            std::cout << line << '\n';
+        }
+        else{
+            for(const auto& col : _select->child_at(0)->get_children()){
+                std::visit([&](const auto& val) {
+                    line += std::format("{}: {}|", col->get_token().value, val);
+                }, block_data[col->get_token().value]);
+            }
+            std::cout << line << '\n';
+        }
+    }
+    if(!page->is_leaf){
+        select_no_condition(table_path, page->children[page->n], buffer_manager, table_schema, _select);
+    }
 }
